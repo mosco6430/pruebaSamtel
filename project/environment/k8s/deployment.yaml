@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mi-app-deployment
+  labels:
+    app: mi-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mi-app
+  template:
+    metadata:
+      labels:
+        app: mi-app
+    spec:
+      containers:
+      - name: mi-app-container
+        image: 370145870803.dkr.ecr.us-east-1.amazonaws.com/demo-ecr  
+        ports:
+        - containerPort: 80
+        envFrom:
+        - configMapRef:
+            name: mi-app-config

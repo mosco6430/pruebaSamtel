@@ -1,0 +1,77 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  sonar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup SonarScanner
+        uses: sonarsource/sonarcloud-github-action@v1.6
+        with:
+          args: >
+            -Dsonar.projectKey=mi-app
+            -Dsonar.organization=tu-org
+            -Dsonar.sources=project/app
+
+  build_and_push:
+    runs-on: ubuntu-latest
+    needs: sonar
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build Docker image
+        run: |
+          docker build -t demo-ecr ./project/app
+          docker tag demo-ecr:latest 370145870803.dkr.ecr.us-east-1.amazonaws.com/demo-ecr:latest
+
+      - name: Push image to ECR
+        run: |
+          docker push 370145870803.dkr.ecr.us-east-1.amazonaws.com/demo-ecr:latest
+
+  run_parallel_jobs:
+    runs-on: ubuntu-latest
+    needs: build_and_push
+    steps:
+      - name: Parallel Hello World
+        run: |
+          for i in {1..10}; do (echo "Hola Mundo $i") & done; wait
+
+      - name: Create files with date and print
+        run: |
+          for i in {1..10}; do echo "Archivo $i - Fecha: $(date)" > archivo_$i.txt; done
+          cat archivo_*.txt
+
+  deploy_k8s:
+    runs-on: ubuntu-latest
+    needs: run_parallel_jobs
+    env:
+      KUBECONFIG: ${{ secrets.KUBECONFIG }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+
+      - name: Deploy to Kubernetes
+        run: |
+          # Actualiza deployment.yaml para usar la imagen de ECR
+          sed -i 's|image: .*|image: 370145870803.dkr.ecr.us-east-1.amazonaws.com/demo-ecr:latest|' ./project/environment/k8s/deployment.yaml
+          kubectl apply -f ./project/environment/k8s/deployment.yaml
+          kubectl apply -f ./project/environment/k8s/service.yaml
+          kubectl apply -f ./project/environment/k8s/ingress.yaml

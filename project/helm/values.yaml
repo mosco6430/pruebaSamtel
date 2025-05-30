@@ -1,0 +1,19 @@
+replicaCount: 1
+
+image:
+  repository: usuario/app
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: true
+  annotations: {}
+  hosts:
+    - host: mi-app.local
+      paths:
+        - /
+  tls: []

@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "mi-app.fullname" . }}
+  labels:
+    app: {{ include "mi-app.name" . }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "mi-app.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "mi-app.name" . }}
+    spec:
+      containers:
+        - name: mi-app
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          ports:
+            - containerPort: 80
