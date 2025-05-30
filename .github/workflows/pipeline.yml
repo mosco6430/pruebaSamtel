@@ -4,12 +4,6 @@ on:
   push:
     branches: [ main ]
 
-env:
-  IMAGE_NAME: getting-started
-  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
-  CLUSTER_NAME: ${{ secrets.CLUSTER_NAME }}
-  AWS_REGION: ${{ secrets.AWS_REGION }}
-
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -35,6 +29,9 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v1
 
       - name: Build and Push Docker Image
+        env:
+          IMAGE_NAME: getting-started
+          ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
         run: |
           docker build -t $IMAGE_NAME .
           docker tag $IMAGE_NAME:latest $ECR_REGISTRY/$IMAGE_NAME:latest
@@ -50,6 +47,7 @@ jobs:
             -Dsonar.sources=. \
             -Dsonar.host.url=$SONAR_HOST_URL \
             -Dsonar.login=$SONAR_TOKEN
+
 
       - name: Print Hola Mundo in Parallel
         run: |
