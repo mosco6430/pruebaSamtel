@@ -4,6 +4,12 @@ on:
   push:
     branches: [ main ]
 
+env:
+  IMAGE_NAME: getting-started
+  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+  CLUSTER_NAME: ${{ secrets.CLUSTER_NAME }}
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -15,10 +21,9 @@ jobs:
       - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v2
         with:
-           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/githubactions
-           aws-region: ${{ secrets.AWS_REGION }}
-           audience: sts.amazonaws.com
-
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/githubactions
+          aws-region: ${{ secrets.AWS_REGION }}
+          audience: sts.amazonaws.com
 
       - name: Confirm AWS identity
         run: aws sts get-caller-identity
@@ -30,9 +35,6 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v1
 
       - name: Build and Push Docker Image
-        env:
-          IMAGE_NAME: getting-started
-          ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
         run: |
           docker build -t $IMAGE_NAME .
           docker tag $IMAGE_NAME:latest $ECR_REGISTRY/$IMAGE_NAME:latest
@@ -49,41 +51,23 @@ jobs:
             -Dsonar.host.url=$SONAR_HOST_URL \
             -Dsonar.login=$SONAR_TOKEN
 
-
-      - name: Print Hola Mundo in Parallel
-        run: |
-          for i in {1..10}; do
-            echo "Hola Mundo $i" &
-          done
-          wait
-
-      - name: Create and Display Date Files
-        run: |
-          for i in {1..10}; do
-            date > "fecha_$i.txt"
-          done
-          cat fecha_*.txt
-
   deploy:
     needs: build-and-deploy
     runs-on: ubuntu-latest
-    env:
-      AWS_REGION: ${{ secrets.AWS_REGION }}
-      CLUSTER_NAME: ${{ secrets.CLUSTER_NAME }}
     steps:
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Configure AWS Credentials
+      - name: Configure AWS Credentials with access keys
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Update kubeconfig
         run: |
-          aws eks update-kubeconfig --region $AWS_REGION --name $CLUSTER_NAME
+          aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name ${{ secrets.CLUSTER_NAME }}
 
       - name: Deploy with Helm
         run: |
