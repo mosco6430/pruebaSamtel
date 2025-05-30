@@ -7,21 +7,22 @@ on:
 env:
   IMAGE_NAME: getting-started
   ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
-  CLUSTER_NAME: eks-cluster
-  AWS_REGION: us-east-1
+  CLUSTER_NAME: ${{ secrets.CLUSTER_NAME }}
+  AWS_REGION: ${{ secrets.AWS_REGION }}
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v3
 
       - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          role-to-assume: arn:aws:iam::370145870803:role/githubactions
-          aws-region: us-east-1
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/githubactions
+          aws-region: ${{ secrets.AWS_REGION }}
           audience: sts.amazonaws.com
 
       - name: Confirm AWS identity
