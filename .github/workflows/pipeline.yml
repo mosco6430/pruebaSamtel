@@ -26,10 +26,13 @@ jobs:
       - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v2
         with:
-            role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/githubactions
-            aws-region: ${{ secrets.AWS_REGION }}
-            audience: sts.amazonaws.com
-
+         role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/githubactions
+         aws-region: ${{ secrets.AWS_REGION }}
+         audience: sts.amazonaws.com
+         env:
+         IMAGE_NAME: getting-started
+         ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
+         CLUSTER_NAME: ${{ secrets.CLUSTER_NAME }}
 
       - name: Confirm AWS identity
         run: aws sts get-caller-identity
