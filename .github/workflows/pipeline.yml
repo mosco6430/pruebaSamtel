@@ -40,7 +40,7 @@ jobs:
           docker tag $IMAGE_NAME:latest $ECR_REGISTRY/$IMAGE_NAME:latest
           docker push $ECR_REGISTRY/$IMAGE_NAME:latest
 
-     - name: Run SonarQube Scan
+      - name: Run SonarQube Scan
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
@@ -50,7 +50,6 @@ jobs:
             -Dsonar.sources=. \
             -Dsonar.host.url=$SONAR_HOST_URL \
             -Dsonar.login=$SONAR_TOKEN
-
 
       - name: Print Hola Mundo in Parallel
         run: |
@@ -67,8 +66,11 @@ jobs:
           cat fecha_*.txt
 
   deploy:
-    needs: build
+    needs: build-and-deploy
     runs-on: ubuntu-latest
+    env:
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      CLUSTER_NAME: ${{ secrets.CLUSTER_NAME }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
