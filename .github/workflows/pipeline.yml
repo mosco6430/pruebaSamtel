@@ -27,7 +27,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v2
         with:
          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/githubactions
-         aws-region: ${{ secrets.AWS_REGION }}
+         aws-region: us-east-1
          audience: sts.amazonaws.com
          env:
          IMAGE_NAME: getting-started
