@@ -19,6 +19,7 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
           audience: sts.amazonaws.com
 
+
       - name: Confirm AWS identity
         run: aws sts get-caller-identity
 
